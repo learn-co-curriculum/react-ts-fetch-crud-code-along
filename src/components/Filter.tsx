@@ -1,6 +1,9 @@
-import React from "react";
+interface Props {
+  category: string;
+  onCategoryChange(category: string): void;
+}
 
-function Filter({ category, onCategoryChange }) {
+function Filter({ category, onCategoryChange }: Props) {
   return (
     <div className="Filter">
       <select

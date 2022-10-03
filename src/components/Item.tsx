@@ -1,6 +1,10 @@
-import React from "react";
+import { GroceryItem } from "../data/types";
 
-function Item({ item }) {
+interface Props {
+  item: GroceryItem;
+}
+
+function Item({ item }: Props) {
   return (
     <li className={item.isInCart ? "in-cart" : ""}>
       <span>{item.name}</span>
