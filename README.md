@@ -5,8 +5,8 @@
 - Write `fetch` requests for `GET`, `POST`, `PATCH`, and `DELETE`
 - Initiate `fetch` requests with the `useEffect` hook
 - Initiate `fetch` requests from user events
-- Update state and trigger a re-render after receiving a response to the
-  `fetch` request
+- Update state and trigger a re-render after receiving a response to the `fetch`
+  request
 - Perform CRUD actions on arrays in state
 
 ## Introduction
@@ -63,7 +63,7 @@ display yet, but eventually, we'll want to display the list of items from
 
 Take some time now to familiarize yourself with the components in the
 `src/components` folder. Which components are stateful and why? What does our
-component hierarchy look like?
+component hierarchy look like? What variables were typed and how?
 
 Once you've familiarized yourself with the starter code, let's start building
 out some features!
@@ -93,17 +93,17 @@ We can call the `useEffect` hook in the `ShoppingList` component to initiate our
 correct, and that we're fetching data from the server:
 
 ```jsx
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
-// import useEffect
-import React, { useEffect, useState } from "react";
+// code change: import useEffect
+import { useEffect, useState } from "react";
 // ...rest of imports
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
-  // Add useEffect hook
+  // code change: add useEffect hook
   useEffect(() => {
     fetch("http://localhost:4000/items")
       .then((r) => r.json())
@@ -123,13 +123,13 @@ to replace our current `items` state, which is an empty array, with the new
 array from the server:
 
 ```jsx
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
-    // Update state by passing the array of items to setItems  
+  // code change: update state by passing the array of items to setItems
   useEffect(() => {
     fetch("http://localhost:4000/items")
       .then((r) => r.json())
@@ -165,25 +165,25 @@ user submits the form. Once again, let's plan out our steps:
 
 To tackle the first step, we'll need to **identify which component triggers the
 event**. In this case, the form in question is in the `ItemForm` component.
-Let's start by handling the form `submit` event in this component and access
-the data from the form inputs, which are saved in state:
+Let's start by handling the form `submit` event in this component and access the
+data from the form inputs, which are saved in state:
 
 ```jsx
-// src/components/ItemForm.js
+// src/components/ItemForm.tsx
 
 function ItemForm() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Produce");
 
-  // Add function to handle submissions
-  function handleSubmit(e) {
+  // code change: add function to handle submissions; don't forget to type the event parameter
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     console.log("name:", name);
     console.log("category:", category);
   }
 
   return (
-    // Set up the form to call handleSubmit when the form is submitted
+    // code change: set up the form to call handleSubmit when the form is submitted
     <form className="NewItem" onSubmit={handleSubmit}>
       {/** ...form inputs here */}
     </form>
@@ -208,9 +208,9 @@ Let's create this item in our `handleSubmit` function using the data from the
 form state:
 
 ```js
-// src/components/ItemForm.js
+// src/components/ItemForm.tsx
 
-function handleSubmit(e) {
+function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
   const itemData = {
     name: name,
@@ -225,13 +225,16 @@ Check your work in the browser again and make sure you are able to log an item
 to the console that has the right key/value pairs. Now, on to the `fetch`!
 
 ```js
-function handleSubmit(e) {
+// src/components/ItemForm.tsx
+
+function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
   const itemData = {
     name: name,
     category: category,
     isInCart: false,
   };
+  // code change: make a POST request to /items with fetch
   fetch("http://localhost:4000/items", {
     method: "POST",
     headers: {
@@ -277,11 +280,11 @@ Let's add a `handleAddItem` function to `ShoppingList`, and pass a reference to
 that function as a prop called `onAddItem` to the `ItemForm`:
 
 ```jsx
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
   useEffect(() => {
     fetch("http://localhost:4000/items")
@@ -289,8 +292,8 @@ function ShoppingList() {
       .then((items) => setItems(items));
   }, []);
 
-  // add this function!
-  function handleAddItem(newItem) {
+  // code change: add this function!
+  function handleAddItem(newItem: GroceryItem) {
     console.log("In ShoppingList:", newItem);
   }
 
@@ -306,7 +309,7 @@ function ShoppingList() {
 
   return (
     <div className="ShoppingList">
-      {/* add the onAddItem prop! */}
+      {/* code change: add the onAddItem prop! */}
       <ItemForm onAddItem={handleAddItem} />
       <Filter
         category={selectedCategory}
@@ -326,14 +329,22 @@ Then, we can use this prop in the `ItemForm` to send the new item **up** to the
 `ShoppingList` when we receive a response from the server:
 
 ```jsx
-// src/components/ItemForm.js
+// src/components/ItemForm.tsx
 
-// destructure the onAddItem prop
-function ItemForm({ onAddItem }) {
+// code change: import the GroceryItem type interface
+import { GroceryItem } from "../data/types";
+
+// code change: create the Props interface
+interface Props {
+  onAddItem(item: GroceryItem): void;
+}
+
+// code change: destructure the onAddItem prop and type it with the Props interface
+function ItemForm({ onAddItem }: Props) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Produce");
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const itemData = {
       name: name,
@@ -348,7 +359,7 @@ function ItemForm({ onAddItem }) {
       body: JSON.stringify(itemData),
     })
       .then((r) => r.json())
-      // call the onAddItem prop with the newItem
+      // code change: call the onAddItem prop with the newItem
       .then((newItem) => onAddItem(newItem));
   }
 
@@ -363,9 +374,9 @@ that has our new item at the end. Recall from our lessons on working with arrays
 in state that we can use the spread operator to perform this action:
 
 ```js
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
-function handleAddItem(newItem) {
+function handleAddItem(newItem: GroceryItem) {
   setItems([...items, newItem]);
 }
 ```
@@ -392,9 +403,9 @@ a few more steps to cover. Once you're ready and recharged, we'll dive back in.
 
 ### Updating Items
 
-For our update action, we'd like to give our users the ability to keep track of which
-items from their shopping list they've added to their cart. Once more, we can outline
-the basic steps for this action like so:
+For our update action, we'd like to give our users the ability to keep track of
+which items from their shopping list they've added to their cart. Once more, we
+can outline the basic steps for this action like so:
 
 - When X event occurs (_a user clicks the Add to Cart button_)
 - Make Y fetch request (_PATCH /items_)
@@ -406,10 +417,10 @@ Can you find where the "Add to Cart" button lives in our code? Yep! It's in the
 button:
 
 ```jsx
-// src/components/Item.js
+// src/components/Item.tsx
 
-function Item({ item }) {
-  // Add function to handle button click
+function Item({ item }: Proprs) {
+  // code change: add function to handle button click
   function handleAddToCartClick() {
     console.log("clicked item:", item);
   }
@@ -418,7 +429,7 @@ function Item({ item }) {
     <li className={item.isInCart ? "in-cart" : ""}>
       <span>{item.name}</span>
       <span className="category">{item.category}</span>
-      {/* add the onClick listener */}
+      {/* code change: add the onClick listener */}
       <button
         className={item.isInCart ? "remove" : "add"}
         onClick={handleAddToCartClick}
@@ -438,10 +449,10 @@ each item logged to the console. We can access the `item` variable in the
 Next, let's write out our `PATCH` request:
 
 ```js
-// src/components/Item.js
+// src/components/Item.tsx
 
 function handleAddToCartClick() {
-  // add fetch request
+  // code change: add fetch request
   fetch(`http://localhost:4000/items/${item.id}`, {
     method: "PATCH",
     headers: {
@@ -489,11 +500,11 @@ function in the `ShoppingList` component and passing it as a prop to the `Item`
 component:
 
 ```jsx
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
   useEffect(() => {
     fetch("http://localhost:4000/items")
@@ -501,8 +512,8 @@ function ShoppingList() {
       .then((items) => setItems(items));
   }, []);
 
-  // add this callback function
-  function handleUpdateItem(updatedItem) {
+  // code change: add this callback function
+  function handleUpdateItem(updatedItem: GroceryItem) {
     console.log("In ShoppingCart:", updatedItem);
   }
 
@@ -516,7 +527,7 @@ function ShoppingList() {
         onCategoryChange={handleCategoryChange}
       />
       <ul className="Items">
-        {/* pass it as a prop to Item */}
+        {/* code change: pass it as a prop to Item */}
         {itemsToDisplay.map((item) => (
           <Item key={item.id} item={item} onUpdateItem={handleUpdateItem} />
         ))}
@@ -526,16 +537,23 @@ function ShoppingList() {
 }
 ```
 
-In the `Item` component, we can destructure the `onUpdateItem` prop and call it
-when we have the updated item response from the server:
+In the `Item` component, we can destructure the `onUpdateItem` prop and add it
+to the type interface. Then, we can call it when we have the updated item
+response from the server:
 
 ```jsx
 // src/components/Item.js
 
-// Destructure the onUpdateItem prop
-function Item({ item, onUpdateItem }) {
+// code change: add the onUpdateItem prop to the Props interface
+interface Props {
+  item: GroceryItem;
+  onUpdateItem(item: GroceryItem): void;
+}
+
+// code change: destructure the onUpdateItem prop
+function Item({ item, onUpdateItem }: Props) {
   function handleAddToCartClick() {
-    // Call onUpdateItem, passing the data returned from the fetch request
+    // code change: call onUpdateItem, passing the data returned from the fetch request
     fetch(`http://localhost:4000/items/${item.id}`, {
       method: "PATCH",
       headers: {
@@ -561,9 +579,9 @@ working with arrays in state that we can use `.map` to help create this new
 array:
 
 ```js
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
-function handleUpdateItem(updatedItem) {
+function handleUpdateItem(updatedItem: GroceryItem) {
   const updatedItems = items.map((item) => {
     if (item.id === updatedItem.id) {
       return updatedItem;
@@ -602,11 +620,12 @@ Our delete button is in the `Item` component, so we'll start by adding an event
 handler for clicks on the button:
 
 ```jsx
-// src/components/Item.js
+// src/components/Item.tsx
 
-function Item({ item, onUpdateItem }) {
+function Item({ item, onUpdateItem }: Props) {
   // ...rest of component
 
+  // code change: add this function
   function handleDeleteClick() {
     console.log(item);
   }
@@ -615,7 +634,7 @@ function Item({ item, onUpdateItem }) {
     <li className={item.isInCart ? "in-cart" : ""}>
       {/* ... rest of JSX */}
 
-      {/* ... add onClick */}
+      {/* ... code change: add onClick */}
       <button className="remove" onClick={handleDeleteClick}>
         Delete
       </button>
@@ -628,7 +647,7 @@ This step should feel similar to our approach for the update action. Next, let's
 write out our `DELETE` request:
 
 ```js
-// src/components/Item.js
+// src/components/Item.tsx
 
 function handleDeleteClick() {
   fetch(`http://localhost:4000/items/${item.id}`, {
@@ -656,7 +675,7 @@ We'll pass a callback down from `ShoppingList` to `Item`, just like we did for
 the update action:
 
 ```jsx
-// src/components/ShoppingList.js
+// src/components/ShoppingList.tsx
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -668,8 +687,8 @@ function ShoppingList() {
       .then((items) => setItems(items));
   }, []);
 
-  // add this callback function
-  function handleDeleteItem(deletedItem) {
+  // code change: add this callback function
+  function handleDeleteItem(deletedItem: GroceryItem) {
     console.log("In ShoppingCart:", deletedItem);
   }
 
@@ -683,7 +702,7 @@ function ShoppingList() {
         onCategoryChange={handleCategoryChange}
       />
       <ul className="Items">
-        {/* pass it as a prop to Item */}
+        {/* code change: pass it as a prop to Item */}
         {itemsToDisplay.map((item) => (
           <Item
             key={item.id}
@@ -702,12 +721,19 @@ Call the `onDeleteItem` prop in the `Item` component once the item has been
 deleted from the server, and pass up the item that was clicked:
 
 ```jsx
-// src/components/Item.js
+// src/components/Item.tsx
 
-// Deconstruct the onDeleteItem prop
+// code change: add onDeleteItem to the Prop interface
+interface Props {
+  item: GroceryItem;
+  onUpdateItem(item: GroceryItem): void;
+  onDeleteItem(item: GroceryItem): void;
+}
+
+// code change: deconstruct the onDeleteItem prop
 function Item({ item, onUpdateItem, onDeleteItem }) {
   function handleDeleteClick() {
-    // Call onDeleteItem, passing the deleted item
+    // code change: call onDeleteItem, passing the deleted item
     fetch(`http://localhost:4000/items/${item.id}`, {
       method: "DELETE",
     })
@@ -723,8 +749,8 @@ deleted item from the list. Recall from our lessons on working with arrays in
 state that we can use `.filter` to help create this new array:
 
 ```js
-// src/components/ShoppingList.js
-function handleDeleteItem(deletedItem) {
+// src/components/ShoppingList.tsx
+function handleDeleteItem(deletedItem: GroceryItem) {
   const updatedItems = items.filter((item) => item.id !== deletedItem.id);
   setItems(updatedItems);
 }
@@ -762,4 +788,5 @@ handling events, updating state, and passing data between components.
 
 - [MDN: Using Fetch][using fetch]
 
-[using fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#uploading_json_data
+[using fetch]:
+  https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#uploading_json_data

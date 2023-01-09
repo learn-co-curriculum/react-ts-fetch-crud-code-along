@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ItemForm from "./ItemForm";
 import Filter from "./Filter";
 import Item from "./Item";
+import { GroceryItem } from "../data/types";
 
 function ShoppingList() {
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<GroceryItem[]>([]);
 
-  function handleCategoryChange(category) {
+  function handleCategoryChange(category: string) {
     setSelectedCategory(category);
   }
 

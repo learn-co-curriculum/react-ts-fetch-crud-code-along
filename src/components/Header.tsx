@@ -1,6 +1,9 @@
-import React from "react";
+interface Props {
+  isDarkMode: boolean;
+  onDarkModeClick(): void;
+}
 
-function Header({ isDarkMode, onDarkModeClick }) {
+function Header({ isDarkMode, onDarkModeClick }: Props) {
   return (
     <header>
       <h2>Shopster</h2>
